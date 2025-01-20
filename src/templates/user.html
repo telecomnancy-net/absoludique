@@ -1,0 +1,34 @@
+{% include 'head.html' %}
+
+        <link rel="stylesheet" href="/static/styles/user.css" />
+
+    {% include 'header.html' %}
+
+                <h2>{{ user.name }}</h2>
+
+                {% if user.admin %}
+                <a href="/admin">Espace admin</a><br/><br/>
+                {% endif %}
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Jeu</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in reservations %}
+                        <tr>
+                            <td>{{ reservation[1] }}</td>
+                            {% set date_parts = reservation[2].split('-') %}
+                            <td class="{% if reservation[0] in expired_reservations %}late{% endif %}">{{ date_parts[2] }}/{{ date_parts[1] }}/{{ date_parts[0] }}</td>
+                            <td>{{ 'Demandé' if reservation[3] == 0 else 'Emprunté' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+
+{% include 'footer.html' %}

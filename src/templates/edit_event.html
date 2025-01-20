@@ -1,0 +1,62 @@
+{% include 'head.html' %}
+
+        <link rel="stylesheet" href="/static/styles/admin.css" />
+
+    {% include 'header.html' %}
+
+                <section id="edit-event">
+                    <h2>Évènement - {{ event[1] }}</h2>
+
+                    <a href="/event/{{ event[0] }}">Voir l'évènement</a><br/><br/>
+
+                    <form
+                        action="/edit/event/{{ event[0] }}"
+                        method="post"
+
+                        hx-post="/edit/event/{{ event[0] }}"
+                        hx-trigger="submit"
+                        hx-target=".response"
+                    >
+                        <input type="text" name="name" value="{{ event[1] }}" />
+                        <input type="datetime-local" name="date" value="{{ event[2] }}" />
+                        <textarea name="description">{{ event[3] }}</textarea>
+                        <button>Modifier</button>
+
+                        <div class="response"></div>
+                    </form>
+
+                    <h3>Participants</h3>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participants-table">
+                            {% for participant in participants %}
+                            <tr>
+                                <td>{{ participant[1] }}</td>
+                                <td>{{ participant[2] }}</td>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <br/><br/>
+                    <a class="button" href="mailto:{% for participant in participants %}{{ participant[2] }}{% if not loop.last %}, {% endif %}{% endfor %}">
+                        Envoyer un mail aux participants
+                    </a>
+                    <br/><br/>
+                    <button onclick="copyEmailsToClipboard()">Copier les emails des participants</button>
+
+                    <script>
+                        function copyEmailsToClipboard() {
+                            const emails = `{% for participant in participants %}{{ participant[2] }}{% if not loop.last %}, {% endif %}{% endfor %}`;
+                            navigator.clipboard.writeText(emails);
+                        }
+                    </script>
+                </section>
+
+
+{% include 'footer.html' %}

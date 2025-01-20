@@ -1,0 +1,8 @@
+services:
+  app:
+    env_file: ".env"
+    build: 
+      dockerfile: ./Dockerfile
+      context: .
+    ports:
+      - 8000:8000

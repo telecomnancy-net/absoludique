@@ -1,0 +1,117 @@
+section {
+    margin-bottom: 200px !important;
+
+    &:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    > form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+
+        > div {
+            * {
+                display: inline-block !important;
+            }
+        }
+
+        label {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="datetime-local"] {
+            color: var(--c-min-text);
+        }
+
+        button {
+            width: min-content;
+        }
+    }
+
+    table {
+        .late {
+            border-radius: 5px;
+            color: white;
+            background-color: var(--c-red);
+        }
+    }
+
+    .page-nav {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+#reservations {
+    table {
+        grid-template-columns: min-content auto auto auto min-content min-content;
+
+        .deleted {
+            grid-column: span 6;
+        }
+    }
+}
+
+#events {
+    table {
+        grid-template-columns: min-content auto auto min-content;
+
+        .deleted {
+            grid-column: span 4;
+        }
+    }
+
+    .purge-events {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 1lh;
+
+        button {
+            width: fit-content;
+            background-color: var(--c-red);
+        }
+    }
+}
+
+#games {
+    table {
+        grid-template-columns: min-content auto min-content;
+
+        .deleted {
+            grid-column: span 3;
+        }
+    }
+}
+
+#online-games {
+    table {
+        grid-template-columns: min-content auto min-content;
+
+        .deleted {
+            grid-column: span 3;
+        }
+    }
+}
+
+#users {
+    table {
+        grid-template-columns: min-content auto auto min-content min-content;
+
+        .deleted {
+            grid-column: span 5;
+        }
+    }
+}
+
+#edit-event {
+    table {
+        grid-template-columns: auto auto;
+    }
+}

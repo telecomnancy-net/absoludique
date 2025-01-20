@@ -1,0 +1,37 @@
+{% include 'head.html' %}
+
+        <link rel="stylesheet" href="/static/styles/events.css" />
+
+    {% include 'header.html' %}
+
+                <h2>{{ event[1] }}</h2>
+
+                {% set date_parts = event[2].split('-') %}
+                {% set time_parts = date_parts[2].split('T') %}
+                <time datetime="{{ event[2] }}">{{ time_parts[0] }}/{{ date_parts[1] }}/{{ date_parts[0] }} {{ time_parts[1] }}</time>
+
+                {% if current_user.admin %}
+                <br/><br/><a href="/edit/event/{{ event[0] }}">Éditer</a>
+                {% endif %}
+
+                <p>{{ event[3].replace('\n', '<br/>') | safe }}</p>
+
+                {% if logged %}
+                <form
+                    action="/event/{{ event[0] }}"
+                    method="post"
+
+                    hx-post="/event/{{ event[0] }}"
+                    hx-trigger="submit"
+                >
+                    {% if is_participant %}
+                    <button>Se désinscrire</button>
+                    {% else %}
+                    <button>S'inscrire</button>
+                    {% endif %}
+                </form>
+                {% else %}
+                <a href="/google/">Connecte toi</a> pour t'inscrire à cet évènement !
+                {% endif %}
+
+{% include 'footer.html' %}

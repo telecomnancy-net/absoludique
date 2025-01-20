@@ -1,0 +1,96 @@
+{% include 'head.html' %}
+
+        <link rel="stylesheet" href="/static/styles/index.css" />
+
+    {% include 'header.html' %}
+
+                <section id="reserve">
+                    <h2>Réserve ton jeu</h2>
+
+                    {% if logged and reservation_max %}
+                    Nombre maximum de réservations atteint, veuillez revenir plus tard.<br/>
+                    Tu peux regarder le <a href="/catalog">catalogue</a> en attendant.
+
+                    {% elif logged and games %}
+                    <form
+                        action="/reserve"
+                        method="post"
+
+                        hx-post="/reserve"
+                        hx-trigger="submit"
+                        hx-target=".response"
+                    >
+                        <input type="text" name="game" list="games" placeholder="Jeux" />
+                        <datalist id="games">
+                           	{% for game in games %}
+                            <option value="{{ game[0] }}">
+                                {{ game[0] }}
+                            </option>
+                            {% endfor %}
+                        </datalist>
+
+                        <button>Réserver</button>
+
+                        <div class="response"></div>
+                    </form>
+                    <br/>
+                    Si tu ne sais pas à quoi jouer, tu peux regarder le <a href="/catalog">catalogue</a>.
+
+                    {% elif logged %}
+                    Tous les jeux sont déjà réservés, reviens plus tard...<br/>
+                    Tu peux regarder le <a href="/catalog">catalogue</a> en attendant.
+
+                    {% else %}
+                    <a href="/google/">Connecte toi</a> pour réserver un jeu !<br/>
+                    Pour découvrir nos jeux, tu peux regarder le <a href="/catalog">catalogue</a>.
+                    {% endif %}
+                </section>
+
+                <section id="events">
+                    <h2>Évènements</h2>
+                    {% if events %}
+                    <ul>
+                        {% for event in events %}
+                        <li>
+                            <a class="event-title" href="/event/{{ event[0] }}">
+                                <b>{{ event[1] }}</b>
+                            </a>
+                            {% set date_parts = event[2].split('-') %}
+                            {% set time_parts = date_parts[2].split('T') %}
+                            <time datetime="{{ event[2] }}">{{ time_parts[0] }}/{{ date_parts[1] }}/{{ date_parts[0] }} {{ time_parts[1] }}</time>
+                            <p>
+                                {{ event[3][:100] }}
+                                {% if event[3]|length > 100 %}
+                                ...
+                                {% endif %}
+                            </p>
+                            <a href="/event/{{ event[0] }}">S'inscrire</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    Aucun évènement à venir
+                    {% endif %}
+                </section>
+
+                {% if online_games %}
+                <section id="online-games">
+                    <h2>Jeux en ligne</h2>
+                    <ul>
+                        {% for game in online_games %}
+                        <li>
+                            <a
+                                href="{{ game[2] }}"
+                                style="background-image: url('/static/images/online_games/{{ game[0] }}.webp');"
+                            >
+                                <b>{{ game[1] }}</b>
+                                <p>{{ game[3] }}</p>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+
+
+{% include 'footer.html' %}

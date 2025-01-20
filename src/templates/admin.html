@@ -1,0 +1,372 @@
+{% include 'head.html' %}
+
+        <link rel="stylesheet" href="/static/styles/admin.css" />
+        <script src="/static/scripts/admin.js" defer></script>
+
+    {% include 'header.html' %}
+
+                <section id="reservations">
+                    <h2>Réservations</h2>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Utilisateur</th>
+                                <th>Date</th>
+                                <th>Jeu</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservations-table">
+                            {% for reservation in reservations %}
+                            <tr id="reservation-{{ reservation[0] }}">
+                                <td>{{ reservation[0] }}</td>
+                                <td>{{ reservation[1] }}</td>
+                                {% set date_parts = reservation[2].split('-') %}
+                                <td class="{% if reservation[0] in expired_reservations %}late{% endif %}">{{ date_parts[2] }}/{{ date_parts[1] }}/{{ date_parts[0] }}</td>
+                                <td>{{ reservation[3] }}</td>
+                                <td>{{ 'Demandé' if reservation[4] == 0 else 'Emprunté' }}</td>
+                                <td>
+                                    <button onclick="editReservation({{ reservation[0] }}, {{ reservation[4] }})">Éditer</button>
+                                    <form
+                                        action="/delete/reservation/{{ reservation[0] }}"
+                                        method="post"
+
+                                        hx-post="/delete/reservation/{{ reservation[0] }}"
+                                        hx-trigger="submit"
+                                        hx-target="#reservation-{{ reservation[0] }}"
+                                    >
+                                        <button>Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="page-nav">
+                        <button
+                            hx-post="/reservations/page/0"
+                            hx-trigger="click"
+                            hx-target="#reservations-table"
+                            hx-on::before-request="changePageReservations(0)"
+                        >
+                            ←
+                        </button>
+                        <div>1</div>
+                        <button
+                            hx-post="/reservations/page/1"
+                            hx-trigger="click"
+                            hx-target="#reservations-table"
+                            hx-on::before-request="changePageReservations(1)"
+                        >
+                            →
+                        </button>
+                    </div>
+                </section>
+
+                <section id="events">
+                    <h2>Évènements</h2>
+
+                    <form
+                        action="/create/event"
+                        method="post"
+
+                        hx-post="/create/event"
+                        hx-trigger="submit"
+                        hx-target="#events .response"
+                    >
+                        <input type="text" name="name" placeholder="Nom" required />
+                        <input type="datetime-local" name="date" required />
+                        <label>
+                            <input type="datetime-local" name="end_date" />
+                            date de fin (optionel)
+                        </label>
+                        <textarea name="description" placeholder="Description" required></textarea>
+                        <button>Créer</button>
+
+                        <div class="response"></div>
+                    </form>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-table">
+                            {% for event in events %}
+                            <tr id="event-{{ event[0] }}">
+                                <td>{{ event[0] }}</td>
+                                <td>
+                                    <a href="/event/{{ event[0] }}">{{ event[1] }}</a>
+                                </td>
+                                {% set date_parts = event[2].split('-') %}
+                                {% set time_parts = date_parts[2].split('T') %}
+                                <td class="{% if event[0] in expired_events %}late{% endif %}">{{ time_parts[0] }}/{{ date_parts[1] }}/{{ date_parts[0] }} {{ time_parts[1] }}</td>
+                                <td>
+                                    <a class="button" href="/edit/event/{{ event[0] }}">Éditer</a>
+                                    <form
+                                        action="/delete/event/{{ event[0] }}"
+                                        method="post"
+
+                                        hx-post="/delete/event/{{ event[0] }}"
+                                        hx-trigger="submit"
+                                        hx-target="#event-{{ event[0] }}"
+                                    >
+                                        <button>Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="page-nav">
+                        <button
+                            hx-post="/events/page/0"
+                            hx-trigger="click"
+                            hx-target="#events-table"
+                            hx-on::before-request="changePageEvents(0)"
+                        >
+                            ←
+                        </button>
+                        <div>1</div>
+                        <button
+                            hx-post="/events/page/1"
+                            hx-trigger="click"
+                            hx-target="#events-table"
+                            hx-on::before-request="changePageEvents(1)"
+                        >
+                            →
+                        </button>
+                    </div>
+
+                    <div class="purge-events">
+                        <button
+                        hx-post="/purge/events"
+                        hx-target=".purge-events .response"
+                        >
+                            Supprimer les évènements terminés
+                        </button>
+                        <div class="response"></div>
+                    </div>
+                </section>
+
+                <section id="games">
+                    <h2>Jeux</h2>
+
+                    <form
+                        action="/create/game"
+                        method="post"
+                        enctype="multipart/form-data"
+
+                        hx-post="/create/game"
+                        hx-trigger="submit"
+                        hx-target="#games .response"
+                    >
+                        <input type="text" name="name" placeholder="Nom" required />
+                        <div>
+                            <input type="number" name="time" min="1" value="1" required /> min
+                        </div>
+                        <div>
+                            <input type="number" name="nb_player_min" min="1" value="1" required /> - <input type="number" name="nb_player_max" min="1" value="10" required /> pers.
+                        </div>
+                        <textarea name="description" placeholder="Description"></textarea>
+                        <input type="file" name="image" accept="image/*" required />
+
+                        <button>Créer</button>
+
+                        <div class="response"></div>
+                    </form>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="games-table">
+                            {% for game in games %}
+                            <tr id="game-{{ game[0] }}">
+                                <td>{{ game[0] }}</td>
+                                <td>{{ game[1] }}</td>
+                                <td>
+                                    <form
+                                        action="/delete/game/{{ game[0] }}"
+                                        method="post"
+
+                                        hx-post="/delete/game/{{ game[0] }}"
+                                        hx-trigger="submit"
+                                        hx-target="#game-{{ game[0] }}"
+                                    >
+                                        <button>Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="page-nav">
+                        <button
+                            hx-post="/games/page/0"
+                            hx-trigger="click"
+                            hx-target="#games-table"
+                            hx-on::before-request="changePageGames(0)"
+                        >
+                            ←
+                        </button>
+                        <div>1</div>
+                        <button
+                            hx-post="/games/page/1"
+                            hx-trigger="click"
+                            hx-target="#games-table"
+                            hx-on::before-request="changePageGames(1)"
+                        >
+                            →
+                        </button>
+                    </div>
+                </section>
+
+                <section id="online-games">
+                    <h2>Jeux en ligne</h2>
+
+                    <form
+                        action="/create/online-game"
+                        method="post"
+                        enctype="multipart/form-data"
+
+                        hx-post="/create/online-game"
+                        hx-trigger="submit"
+                        hx-target="#online-games .response"
+                    >
+                        <input type="text" name="name" placeholder="Nom" required />
+                        <input type="text" name="link" placeholder="Lien" required />
+                        <textarea name="description" placeholder="Description courte"></textarea>
+                        <input type="file" name="image" accept="image/*" required />
+
+                        <button>Créer</button>
+
+                        <div class="response"></div>
+                    </form>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="online-games-table">
+                            {% for game in online_games %}
+                            <tr id="online-game-{{ game[0] }}">
+                                <td>{{ game[0] }}</td>
+                                <td>{{ game[1] }}</td>
+                                <td>
+                                    <form
+                                        action="/delete/online-game/{{ game[0] }}"
+                                        method="post"
+
+                                        hx-post="/delete/online-game/{{ game[0] }}"
+                                        hx-trigger="submit"
+                                        hx-target="#online-game-{{ game[0] }}"
+                                    >
+                                        <button>Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="page-nav">
+                        <button
+                            hx-post="/online-games/page/0"
+                            hx-trigger="click"
+                            hx-target="#online-games-table"
+                            hx-on::before-request="changePageOnlineGames(0)"
+                        >
+                            ←
+                        </button>
+                        <div>1</div>
+                        <button
+                            hx-post="/online-games/page/1"
+                            hx-trigger="click"
+                            hx-target="#online-games-table"
+                            hx-on::before-request="changePageOnlineGames(1)"
+                        >
+                            →
+                        </button>
+                    </div>
+                </section>
+
+                <section id="users">
+                    <h2>Utilisateurs</h2>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>E-mail</th>
+                                <th>Admin</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            {% for user in users %}
+                            <tr id="user-{{ user[0] }}">
+                                <td>{{ user[0] }}</td>
+                                <td>{{ user[1] }}</td>
+                                <td>{{ user[2] }}</td>
+                                <td>{{ 'Oui' if user[3] == 1 else 'Non' }}</td>
+                                <td>
+                                    <button onclick="editUser({{ user[0] }}, {{ user[3] }})">Éditer</button>
+                                    <form
+                                        action="/delete/user/{{ user[0] }}"
+                                        method="post"
+
+                                        hx-post="/delete/user/{{ user[0] }}"
+                                        hx-trigger="submit"
+                                        hx-target="#user-{{ user[0] }}"
+                                    >
+                                        <button>Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="page-nav">
+                        <button
+                            hx-post="/users/page/0"
+                            hx-trigger="click"
+                            hx-target="#users-table"
+                            hx-on::before-request="changePageUsers(0)"
+                        >
+                            ←
+                        </button>
+                        <div>1</div>
+                        <button
+                            hx-post="/users/page/1"
+                            hx-trigger="click"
+                            hx-target="#users-table"
+                            hx-on::before-request="changePageUsers(1)"
+                        >
+                            →
+                        </button>
+                    </div>
+                </section>
+
+
+{% include 'footer.html' %}

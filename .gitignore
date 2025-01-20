@@ -1,0 +1,9 @@
+__pycache__/
+env/
+venv/
+test.py
+.env
+*.db
+.DS_Store
+flake.*
+.ropeproject

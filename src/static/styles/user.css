@@ -1,0 +1,9 @@
+table {
+    grid-template-columns: auto auto min-content;
+
+    .late {
+        border-radius: 5px;
+        color: white;
+        background-color: var(--c-red);
+    }
+}

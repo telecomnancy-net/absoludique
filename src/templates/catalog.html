@@ -1,0 +1,83 @@
+{% include 'head.html' %}
+
+        <link rel="stylesheet" href="/static/styles/catalog.css" />
+        <script src="/static/scripts/catalog.js" defer></script>
+
+    {% include 'header.html' %}
+
+                <script>
+                  var description = {};
+                  {% for game in games %}
+                  description["{{ game[0] }}"] = "{{ game[2] }}";
+                  {% endfor %}
+                </script>
+
+                <h2>Catalogue</h2>
+
+                <form
+                    action="/catalog"
+                    method="POST"
+
+                    hx-post="/catalog"
+                    hx-trigger="change, keyup from:.search"
+                    hx-target=".list-game"
+                >
+                    <input type="search" class="search" name="name" placeholder="Rechercher" />
+                    <b>Filtres</b>
+                    <label>
+                        <div>Joueur</div>
+                        <input type="number" name="nb_player" min="1" max="100" value="2" />
+                    </label>
+                    <label>
+                        <div>Temps max</div>
+                        <input type="number" name="max_time" min="0" max="120" value="120" />
+                    </label>
+                </form>
+
+                <div id="info-catalog">
+                    {% if not logged %}
+                    <a href="/google/">Connecte toi</a> si tu souhaites réserver un jeu !
+                    {% elif reservation_max %}
+                    Nombre maximum de réservations atteint, reviens plus tard.
+                    {% endif %}
+                </div>
+
+                <ul class="list-game">
+                    {% for game in games %}
+                    <li class="game">
+                        <div class="image" onclick="popUpDesc('{{ game[0] }}')" style="background-image: url('/static/images/games/{{ game[0] }}.webp');" title="Description" ></div>
+                        <b>{{ game[1] }}</b>
+                        <ul>
+                            <li class="time">~{{ game[3] }}min</li>
+                            <li class="nb-players">
+                                {{ game[4] }}
+                                {% if games[5] != game[4] %}
+                                - {{ game[5] }}
+                                {% endif %}
+                                pers.
+                            </li>
+                        </ul>
+                        <form
+                            action="/reserve"
+                            method="post"
+
+                            hx-post="/reserve"
+                            hx-trigger="submit"
+                            hx-target="#info-catalog"
+                        >
+                            <input type="hidden" name="game" value="{{ game[1] }}" />
+                            <button
+                            {% if not logged or reservation_max or game[6] %}
+                            disabled
+                            {% endif %}
+                            >
+                                Réserver
+                            </button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <div id="pop-up-desc" class="pop-up" onclick="closePopUpDesc()"></div>
+
+{% include 'footer.html' %}
