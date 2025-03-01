@@ -2,7 +2,6 @@ FROM python:3.11
 WORKDIR /src/
 ADD ./src /src/
 ADD requirements.txt /src
-ADD .env /src
 RUN ls -la
 RUN pip install -r requirements.txt
 EXPOSE 3306
