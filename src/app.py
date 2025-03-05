@@ -528,8 +528,8 @@ def r_user():
     return render_template(
         'user.html',
         user=current_user,
-        reservations = reservations,
-        expired_reservations = expired_reservations
+        reservations=reservations,
+        expired_reservations=expired_reservations
     )
 
 #
@@ -539,7 +539,7 @@ def r_user():
 @app.route('/google/')
 def google():
     # Redirect to google_auth function
-    redirect_uri = url_for('google_auth', _external=True)
+    redirect_uri = url_for('google_auth', _external=True, _scheme='https')
     return oauth.google.authorize_redirect(redirect_uri)
 
 @app.route('/google/auth/')
