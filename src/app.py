@@ -1100,8 +1100,12 @@ def hx_create_game():
     db.commit()
 
     game_id = cursor.lastrowid
-    with open(f'static/data/games/{game_id}.webp', 'wb') as f:
-        f.write(image.getbuffer())
+    try:
+        with open(f'static/data/games/{game_id}.webp', 'wb') as f:
+            f.write(image.getbuffer())
+    except Exception as e:
+        import traceback
+        return f"Error saving image: {str(e)}\n{traceback.format_exc()}"
 
     return "Nouveau jeu créé, rechargez la page pour le voir apparaître"
 
