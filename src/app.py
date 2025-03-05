@@ -67,10 +67,10 @@ def get_db():
 
 @app.before_first_request
 def startup():
-    if not os.path.exists('static/data/games'):
-        os.makedirs('static/data/games')
-    if not os.path.exists('static/data/online_games'):
-        os.makedirs('static/data/online_games')
+    if not os.path.exists('/src/static/data/games'):
+        os.makedirs('/src/static/data/games')
+    if not os.path.exists('/src/static/data/online_games'):
+        os.makedirs('/src/static/data/online_games')
 
 @app.teardown_appcontext
 def close_connection(exception):
