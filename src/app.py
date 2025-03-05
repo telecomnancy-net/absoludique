@@ -571,10 +571,10 @@ def google_auth():
 
         cursor.execute(
             """
-            INSERT INTO users (google_id, name, email)
-            VALUES (?, ?, ?);
+            INSERT INTO users (google_id, name, email, admin)
+            VALUES (?, ?, ?, ?);
             """,
-            (google_id, name, email)
+            (google_id, name, email, False)
         )
         db.commit()
 
