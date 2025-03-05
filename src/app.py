@@ -46,6 +46,11 @@ oauth.register(
     }
 )
 
+if not os.path.exists('/src/static/data/games'):
+    os.makedirs('/src/static/data/games')
+if not os.path.exists('/src/static/data/online_games'):
+    os.makedirs('/src/static/data/online_games')
+
 #
 #
 #
@@ -64,13 +69,6 @@ def get_db():
     if db is None:
         db = g._database = mariadb.connect(**DATABASE)
     return db
-
-@app.before_first_request
-def startup():
-    if not os.path.exists('/src/static/data/games'):
-        os.makedirs('/src/static/data/games')
-    if not os.path.exists('/src/static/data/online_games'):
-        os.makedirs('/src/static/data/online_games')
 
 @app.teardown_appcontext
 def close_connection(exception):
