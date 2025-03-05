@@ -320,7 +320,7 @@ def hx_catalog():
     for game in games:
         html += f"""
         <li class="game">
-            <div class="image" style="background-image: url('/static/images/games/{game[0]}.webp');" ></div>
+            <div class="image" style="background-image: url('/static/data/games/{game[0]}.webp');" ></div>
             <b>{game[1]}</b>
             <ul>
                 <li class="time">~{game[3]}min</li>
@@ -1100,7 +1100,7 @@ def hx_create_game():
     db.commit()
 
     game_id = cursor.lastrowid
-    with open(f'static/images/games/{game_id}.webp', 'wb') as f:
+    with open(f'static/data/games/{game_id}.webp', 'wb') as f:
         f.write(image.getbuffer())
 
     return "Nouveau jeu créé, rechargez la page pour le voir apparaître"
@@ -1113,7 +1113,7 @@ def hx_delete_game(id):
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    image_path = f'static/images/games/{id}.webp'
+    image_path = f'static/data/games/{id}.webp'
     if os.path.exists(image_path):
         os.remove(image_path)
 
@@ -1212,7 +1212,7 @@ def hx_create_online_game():
     db.commit()
 
     online_game_id = cursor.lastrowid
-    with open(f'static/images/online_games/{online_game_id}.webp', 'wb') as f:
+    with open(f'static/data/online_games/{online_game_id}.webp', 'wb') as f:
         f.write(image.getbuffer())
 
     return "Nouveau jeu créé, rechargez la page pour le voir apparaître"
@@ -1225,7 +1225,7 @@ def hx_delete_online_game(id):
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    image_path = f'static/images/online_games/{id}.webp'
+    image_path = f'static/data/online_games/{id}.webp'
     if os.path.exists(image_path):
         os.remove(image_path)
 

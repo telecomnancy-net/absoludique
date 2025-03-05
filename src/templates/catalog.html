@@ -45,7 +45,7 @@
                 <ul class="list-game">
                     {% for game in games %}
                     <li class="game">
-                        <div class="image" onclick="popUpDesc('{{ game[0] }}')" style="background-image: url('/static/images/games/{{ game[0] }}.webp');" title="Description" ></div>
+                        <div class="image" onclick="popUpDesc('{{ game[0] }}')" style="background-image: url('/static/data/games/{{ game[0] }}.webp');" title="Description" ></div>
                         <b>{{ game[1] }}</b>
                         <ul>
                             <li class="time">~{{ game[3] }}min</li>
