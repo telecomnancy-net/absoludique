@@ -495,8 +495,10 @@ def hx_event(id):
     return "<button>Se désinscrire</button>"
 
 @app.route('/user')
-@login_required
 def r_user():
+    if not current_user.is_authenticated:
+        return redirect('/google')
+
     db = get_db()
     cursor = db.cursor()
 
