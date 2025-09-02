@@ -10,16 +10,22 @@ Author: rom100main
 #
 #
 # Initialization
-from flask import Flask, render_template, g, request, redirect, make_response, url_for
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from authlib.integrations.flask_client import OAuth
-
-import mariadb
-
-import os
 import datetime
 import io
+import os
+
+import mariadb
+from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+from flask import Flask, g, make_response, redirect, render_template, request, url_for
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 from PIL import Image
 
 load_dotenv()
@@ -35,21 +41,19 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 oauth = OAuth(app)
 
-CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+CONF_URL = "https://accounts.google.com/.well-known/openid-configuration"
 oauth.register(
-    name='google',
+    name="google",
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
     server_metadata_url=CONF_URL,
-    client_kwargs={
-        'scope': 'openid email profile'
-    }
+    client_kwargs={"scope": "openid email profile"},
 )
 
-if not os.path.exists('/src/static/data/games'):
-    os.makedirs('/src/static/data/games')
-if not os.path.exists('/src/static/data/online_games'):
-    os.makedirs('/src/static/data/online_games')
+if not os.path.exists("/src/static/data/games"):
+    os.makedirs("/src/static/data/games")
+if not os.path.exists("/src/static/data/online_games"):
+    os.makedirs("/src/static/data/online_games")
 
 #
 #
@@ -61,20 +65,23 @@ DATABASE = {
     "port": int(os.getenv("MARIADB_PORT")),
     "user": os.getenv("MARIADB_USER"),
     "password": os.getenv("MARIADB_PASSWORD"),
-    "database": os.getenv("MARIADB_DATABASE")
+    "database": os.getenv("MARIADB_DATABASE"),
 }
 
+
 def get_db():
-    db = getattr(g, '_database', None)
+    db = getattr(g, "_database", None)
     if db is None:
         db = g._database = mariadb.connect(**DATABASE)
     return db
 
+
 @app.teardown_appcontext
 def close_connection(exception):
-    db = getattr(g, '_database', None)
+    db = getattr(g, "_database", None)
     if db is not None:
         db.close()
+
 
 #
 #
@@ -85,9 +92,9 @@ class User(UserMixin):
         self,
         name: str,
         password: bytes,
-        id: int=-1,
-        google_id: int=-1,
-        admin: bool=False
+        id: int = -1,
+        google_id: int = -1,
+        admin: bool = False,
     ):
         self.id = id
         self.google_id = google_id
@@ -95,9 +102,11 @@ class User(UserMixin):
         self.password = password
         self.admin = admin
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return find_user(user_id)
+
 
 def find_user(id):
     db = get_db()
@@ -108,18 +117,13 @@ def find_user(id):
         FROM users
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     user = cursor.fetchone()
     if user is None:
         return None
-    return User(
-        id = id,
-        google_id = user[1],
-        name = user[2],
-        password = user[3],
-        admin = user[4]
-    )
+    return User(id=id, google_id=user[1], name=user[2], password=user[3], admin=user[4])
+
 
 def find_user_google_id(google_id: str):
     db = get_db()
@@ -130,7 +134,7 @@ def find_user_google_id(google_id: str):
         FROM users
         WHERE google_id = ?;
         """,
-        (google_id,)
+        (google_id,),
     )
     id = cursor.fetchone()
     if id is None:
@@ -138,6 +142,7 @@ def find_user_google_id(google_id: str):
     id = id[0]
 
     return find_user(id)
+
 
 def find_user_name(name: str):
     db = get_db()
@@ -148,7 +153,7 @@ def find_user_name(name: str):
         FROM users
         WHERE name = ?;
         """,
-        (name,)
+        (name,),
     )
     id = cursor.fetchone()
     if id is None:
@@ -157,11 +162,13 @@ def find_user_name(name: str):
 
     return find_user(id)
 
+
 #
 #
 #
 #
 # Images
+
 
 def resize_and_convert_to_webp(file, max_width, max_height, quality=80):
     img = Image.open(file)
@@ -175,10 +182,11 @@ def resize_and_convert_to_webp(file, max_width, max_height, quality=80):
     img = img.resize((new_width, new_height), Image.LANCZOS)
 
     output = io.BytesIO()
-    img.save(output, 'WEBP', quality=quality)
+    img.save(output, "WEBP", quality=quality)
     output.seek(0)
 
     return output
+
 
 #
 #
@@ -186,7 +194,8 @@ def resize_and_convert_to_webp(file, max_width, max_height, quality=80):
 #
 # Routes
 
-@app.route('/', methods=['GET'])
+
+@app.route("/", methods=["GET"])
 def r_index():
     db = get_db()
     cursor = db.cursor()
@@ -219,10 +228,10 @@ def r_index():
         nb_reservation = cursor.fetchone()[0]
         if nb_reservation >= 10:
             return render_template(
-                'index.html',
-                logged = current_user.is_authenticated,
-                reservation_max = True,
-                online_games = online_games
+                "index.html",
+                logged=current_user.is_authenticated,
+                reservation_max=True,
+                online_games=online_games,
             )
 
         cursor.execute(
@@ -235,21 +244,22 @@ def r_index():
         games = cursor.fetchall()
 
         return render_template(
-            'index.html',
-            logged = current_user.is_authenticated,
-            games = games,
-            events = events,
-            online_games = online_games
+            "index.html",
+            logged=current_user.is_authenticated,
+            games=games,
+            events=events,
+            online_games=online_games,
         )
 
     return render_template(
-        'index.html',
-        logged = current_user.is_authenticated,
-        events = events,
-        online_games = online_games
+        "index.html",
+        logged=current_user.is_authenticated,
+        events=events,
+        online_games=online_games,
     )
 
-@app.route('/catalog', methods=['GET'])
+
+@app.route("/catalog", methods=["GET"])
 def r_catalog():
     db = get_db()
     cursor = db.cursor()
@@ -273,26 +283,25 @@ def r_catalog():
         nb_reservation = cursor.fetchone()[0]
         if nb_reservation >= 10:
             return render_template(
-                'index.html',
-                logged = current_user.is_authenticated,
-                reservation_max = True,
-                games = games
+                "index.html",
+                logged=current_user.is_authenticated,
+                reservation_max=True,
+                games=games,
             )
 
     return render_template(
-        "catalog.html",
-        logged = current_user.is_authenticated,
-        games = games
+        "catalog.html", logged=current_user.is_authenticated, games=games
     )
 
-@app.route('/catalog', methods=['POST'])
+
+@app.route("/catalog", methods=["POST"])
 def hx_catalog():
     db = get_db()
     cursor = db.cursor()
 
-    name = request.form['name']
-    nb_player = request.form['nb_player']
-    max_time = request.form['max_time']
+    name = request.form["name"]
+    nb_player = request.form["nb_player"]
+    max_time = request.form["max_time"]
 
     cursor.execute(
         """
@@ -304,7 +313,7 @@ def hx_catalog():
             AND g.time <= ?
             AND g.name LIKE CONCAT('%', ?, '%')
         """,
-        (nb_player, max_time, name)
+        (nb_player, max_time, name),
     )
     games = cursor.fetchall()
 
@@ -345,7 +354,7 @@ def hx_catalog():
             >
                 <input type="hidden" name="game" value="{game[1]}" />
                 <button
-                { 'disabled' if not logged or reservation_max or game[6] else '' }
+                {"disabled" if not logged or reservation_max or game[6] else ""}
                 >
                     Réserver
                 </button>
@@ -362,12 +371,13 @@ def hx_catalog():
 
     return html
 
-@app.route('/reserve', methods=['POST'])
+
+@app.route("/reserve", methods=["POST"])
 def hx_reserve():
     if not current_user.is_authenticated:
         return redirect("/?error=Vous devez être connecté pour réserver")
 
-    game = request.form['game']
+    game = request.form["game"]
     if game == None or game == "":
         return "Champs manquants"
 
@@ -380,7 +390,7 @@ def hx_reserve():
         FROM reservations
         WHERE user_id = ?;
         """,
-        (current_user.id,)
+        (current_user.id,),
     )
     nb_reservation = cursor.fetchone()[0]
     if nb_reservation >= 10:
@@ -393,7 +403,7 @@ def hx_reserve():
         WHERE name = ?
         AND id NOT IN (SELECT game_id FROM reservations);
         """,
-        (game,)
+        (game,),
     )
     game_id = cursor.fetchone()
     if game_id is None:
@@ -406,7 +416,7 @@ def hx_reserve():
         FROM reservations
         WHERE game_id = ?;
         """,
-        (game_id,)
+        (game_id,),
     )
     if cursor.fetchone() is not None:
         return "Ce jeu est déjà réservé"
@@ -416,14 +426,15 @@ def hx_reserve():
         INSERT INTO reservations (user_id, date, game_id, status)
         VALUES (?, ?, ?, 0);
         """,
-        (current_user.id, datetime.datetime.now().strftime("%Y-%m-%d"), game_id)
+        (current_user.id, datetime.datetime.now().strftime("%Y-%m-%d"), game_id),
     )
 
     db.commit()
 
     return "Réservation effectuée"
 
-@app.route('/event/<int:id>', methods=['GET'])
+
+@app.route("/event/<int:id>", methods=["GET"])
 def r_events(id):
     db = get_db()
     cursor = db.cursor()
@@ -434,7 +445,7 @@ def r_events(id):
         FROM events
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     event = cursor.fetchone()
     if event is None:
@@ -449,18 +460,19 @@ def r_events(id):
             WHERE user_id = ?
             AND event_id = ?;
             """,
-            (current_user.id, id)
+            (current_user.id, id),
         )
         is_participant = cursor.fetchone()[0] > 0
 
     return render_template(
-        'events.html',
-        logged = current_user.is_authenticated,
-        event = event,
-        is_participant = is_participant
+        "events.html",
+        logged=current_user.is_authenticated,
+        event=event,
+        is_participant=is_participant,
     )
 
-@app.route('/event/<int:id>', methods=['POST'])
+
+@app.route("/event/<int:id>", methods=["POST"])
 @login_required
 def hx_event(id):
     db = get_db()
@@ -473,7 +485,7 @@ def hx_event(id):
         WHERE user_id = ?
         AND event_id = ?;
         """,
-        (current_user.id, id)
+        (current_user.id, id),
     )
     is_participant = cursor.fetchone()[0] > 0
 
@@ -484,7 +496,7 @@ def hx_event(id):
             WHERE user_id = ?
             AND event_id = ?;
             """,
-            (current_user.id, id)
+            (current_user.id, id),
         )
         db.commit()
         return "<button>S'inscrire</button>"
@@ -494,15 +506,16 @@ def hx_event(id):
         INSERT INTO events_participant (event_id, user_id)
         VALUES (?, ?);
         """,
-        (id, current_user.id)
+        (id, current_user.id),
     )
     db.commit()
     return "<button>Se désinscrire</button>"
 
-@app.route('/user')
+
+@app.route("/user")
 def r_user():
     if not current_user.is_authenticated:
-        return redirect('/google')
+        return redirect("/google")
 
     db = get_db()
     cursor = db.cursor()
@@ -514,7 +527,7 @@ def r_user():
         JOIN games AS g ON r.game_id = g.id
         WHERE r.user_id = ?;
         """,
-        (current_user.id,)
+        (current_user.id,),
     )
     reservations = cursor.fetchall()
 
@@ -527,29 +540,32 @@ def r_user():
             user_id = ?
         AND date < CURDATE() - INTERVAL 14 DAY;
         """,
-        (current_user.id,)
+        (current_user.id,),
     )
     expired_reservations = cursor.fetchall()
     expired_reservations = [reservation[0] for reservation in expired_reservations]
 
     return render_template(
-        'user.html',
+        "user.html",
         user=current_user,
         reservations=reservations,
-        expired_reservations=expired_reservations
+        expired_reservations=expired_reservations,
     )
+
 
 #
 #
 # Google
 
-@app.route('/google/')
+
+@app.route("/google/")
 def google():
     # Redirect to google_auth function
-    redirect_uri = url_for('google_auth', _external=True, _scheme='https')
+    redirect_uri = url_for("google_auth", _external=True, _scheme="https")
     return oauth.google.authorize_redirect(redirect_uri)
 
-@app.route('/google/auth/')
+
+@app.route("/google/auth/")
 def google_auth():
     token = oauth.google.authorize_access_token()
     google_id = token["userinfo"]["sub"]
@@ -562,7 +578,7 @@ def google_auth():
         FROM users
         WHERE google_id = ?;
         """,
-        (google_id,)
+        (google_id,),
     )
     user = cursor.fetchone()
 
@@ -579,7 +595,7 @@ def google_auth():
             INSERT INTO users (google_id, name, email, admin)
             VALUES (?, ?, ?, ?);
             """,
-            (google_id, name, email, False)
+            (google_id, name, email, False),
         )
         db.commit()
 
@@ -587,19 +603,22 @@ def google_auth():
 
     login_user(user)
 
-    return redirect('/?info=Connexion réussie')
+    return redirect("/?info=Connexion réussie")
 
-@app.route('/logout', methods=['GET', 'POST'])
+
+@app.route("/logout", methods=["GET", "POST"])
 @login_required
 def logout():
     logout_user()
     return redirect("/?info=Déconnexion réussie")
 
+
 #
 #
 # Admin
 
-@app.route('/admin', methods=['GET'])
+
+@app.route("/admin", methods=["GET"])
 @login_required
 def r_admin():
     if not current_user.admin:
@@ -685,20 +704,22 @@ def r_admin():
     users = cursor.fetchall()
 
     return render_template(
-        'admin.html',
+        "admin.html",
         reservations=reservations,
         expired_reservations=expired_reservations,
         events=events,
         expired_events=expired_events,
         games=games,
         online_games=online_games,
-        users=users
+        users=users,
     )
+
 
 #
 # Reservations
 
-@app.route('/reservations/page/<int:page>', methods=['POST'])
+
+@app.route("/reservations/page/<int:page>", methods=["POST"])
 @login_required
 def hx_reservations_page(page):
     if not current_user.admin:
@@ -721,7 +742,7 @@ def hx_reservations_page(page):
         JOIN users ON reservations.user_id = users.id
         LIMIT 10 OFFSET ?;
         """,
-        (page * 10,)
+        (page * 10,),
     )
     reservations = cursor.fetchall()
 
@@ -745,9 +766,9 @@ def hx_reservations_page(page):
             <tr id="reservation-{reservation[0]}">
                 <td>{reservation[0]}</td>
                 <td>{reservation[1]}</td>
-                <td class="{'late' if reservation[0] in expired_reservations else ''}">{date_reservation}</td>
+                <td class="{"late" if reservation[0] in expired_reservations else ""}">{date_reservation}</td>
                 <td>{reservation[3]}</td>
-                <td>{'Emprunté' if reservation[4] == 0 else 'Demandé'}</td>
+                <td>{"Emprunté" if reservation[4] == 0 else "Demandé"}</td>
                 <td>
                     <button onclick="editReservation({reservation[0]}, {reservation[4]})">Éditer</button>
                     <form
@@ -766,7 +787,8 @@ def hx_reservations_page(page):
 
     return html
 
-@app.route('/edit/reservation/<int:id>', methods=['POST'])
+
+@app.route("/edit/reservation/<int:id>", methods=["POST"])
 @login_required
 def hx_edit_reservation(id):
     if not current_user.admin:
@@ -775,7 +797,7 @@ def hx_edit_reservation(id):
         return response
 
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    status = request.form['status']
+    status = request.form["status"]
 
     db = get_db()
     cursor = db.cursor()
@@ -787,13 +809,14 @@ def hx_edit_reservation(id):
             status = ?
         WHERE id = ?;
         """,
-        (date, status, id)
+        (date, status, id),
     )
     db.commit()
 
     return ""
 
-@app.route('/delete/reservation/<int:id>', methods=['POST'])
+
+@app.route("/delete/reservation/<int:id>", methods=["POST"])
 @login_required
 def hx_delete_reservation(id):
     if not current_user.admin:
@@ -808,16 +831,18 @@ def hx_delete_reservation(id):
         DELETE FROM reservations
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     db.commit()
 
     return "<td class='deleted' colspan='6'>Supprimé</td>"
 
+
 #
 # Events
 
-@app.route('/events/page/<int:page>', methods=['POST'])
+
+@app.route("/events/page/<int:page>", methods=["POST"])
 @login_required
 def hx_events_page(page):
     if not current_user.admin:
@@ -834,7 +859,7 @@ def hx_events_page(page):
         ORDER BY date DESC
         LIMIT 10 OFFSET ?;
         """,
-        (page * 10,)
+        (page * 10,),
     )
     events = cursor.fetchall()
 
@@ -861,7 +886,7 @@ def hx_events_page(page):
             <tr id="event-{event[0]}">
                 <td>{event[0]}</td>
                 <td><a href="/event/{event[0]}">{event[1]}</a></td>
-                <td class={'late' if event[0] in expired_events else ''} >{date_event}</td>
+                <td class={"late" if event[0] in expired_events else ""} >{date_event}</td>
                 <td>
                     <a class="button" href="/edit/event/{event[0]}">Éditer</a>
                     <form
@@ -880,7 +905,8 @@ def hx_events_page(page):
 
     return html
 
-@app.route('/create/event', methods=['POST'])
+
+@app.route("/create/event", methods=["POST"])
 @login_required
 def hx_create_event():
     if not current_user.admin:
@@ -888,15 +914,12 @@ def hx_create_event():
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    name = request.form['name']
-    date = request.form['date']
-    end_date = request.form['end_date'] if request.form['end_date'] != "" else None
-    description = request.form['description']
+    name = request.form["name"]
+    date = request.form["date"]
+    end_date = request.form["end_date"] if request.form["end_date"] != "" else None
+    description = request.form["description"]
 
-    if (
-        None in [name, date, description] or
-        "" in [name, date, description]
-    ):
+    if None in [name, date, description] or "" in [name, date, description]:
         return "Champs manquants"
 
     db = get_db()
@@ -907,13 +930,14 @@ def hx_create_event():
         INSERT INTO events (name, date, end_date, description)
         VALUES (?, ?, ?, ?);
         """,
-        (name, date, end_date, description)
+        (name, date, end_date, description),
     )
     db.commit()
 
     return "Nouvel évènement créé, rechargez la page pour le voir apparaître"
 
-@app.route('/edit/event/<int:id>', methods=['GET'])
+
+@app.route("/edit/event/<int:id>", methods=["GET"])
 @login_required
 def r_edit_event(id):
     db = get_db()
@@ -925,7 +949,7 @@ def r_edit_event(id):
         FROM events
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     event = cursor.fetchone()
     if event is None:
@@ -937,18 +961,19 @@ def r_edit_event(id):
         FROM users
         WHERE id IN (SELECT user_id FROM events_participant WHERE event_id = ?);
         """,
-        (id,)
+        (id,),
     )
     participants = cursor.fetchall()
 
     return render_template(
-        'edit_event.html',
-        logged = current_user.is_authenticated,
-        event = event,
-        participants = participants
+        "edit_event.html",
+        logged=current_user.is_authenticated,
+        event=event,
+        participants=participants,
     )
 
-@app.route('/delete/event/<int:id>', methods=['POST'])
+
+@app.route("/delete/event/<int:id>", methods=["POST"])
 @login_required
 def hx_delete_event(id):
     if not current_user.admin:
@@ -964,13 +989,14 @@ def hx_delete_event(id):
         DELETE FROM events
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     db.commit()
 
     return "<td class='deleted' colspan='3'>Supprimé</td>"
 
-@app.route('/purge/events', methods=['POST'])
+
+@app.route("/purge/events", methods=["POST"])
 @login_required
 def hx_purge_events():
     if not current_user.admin:
@@ -991,7 +1017,8 @@ def hx_purge_events():
 
     return "Effetué avec succès, rechargez la page pour voir les changements"
 
-@app.route('/edit/event/<int:id>', methods=['POST'])
+
+@app.route("/edit/event/<int:id>", methods=["POST"])
 @login_required
 def hx_edit_event(id):
     if not current_user.admin:
@@ -999,9 +1026,9 @@ def hx_edit_event(id):
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    name = request.form['name']
-    date = request.form['date']
-    description = request.form['description']
+    name = request.form["name"]
+    date = request.form["date"]
+    description = request.form["description"]
 
     db = get_db()
     cursor = db.cursor()
@@ -1015,16 +1042,18 @@ def hx_edit_event(id):
             description = ?
         WHERE id = ?;
         """,
-        (name, date, description, id)
+        (name, date, description, id),
     )
     db.commit()
 
     return "Modification effectuée"
 
+
 #
 # Games
 
-@app.route('/games/page/<int:page>', methods=['POST'])
+
+@app.route("/games/page/<int:page>", methods=["POST"])
 @login_required
 def hx_games_page(page):
     if not current_user.admin:
@@ -1040,7 +1069,7 @@ def hx_games_page(page):
         FROM games
         LIMIT 10 OFFSET ?;
         """,
-        (page * 10,)
+        (page * 10,),
     )
     games = cursor.fetchall()
 
@@ -1067,7 +1096,8 @@ def hx_games_page(page):
 
     return html
 
-@app.route('/create/game', methods=['POST'])
+
+@app.route("/create/game", methods=["POST"])
 @login_required
 def hx_create_game():
     if not current_user.admin:
@@ -1075,17 +1105,19 @@ def hx_create_game():
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    name = request.form['name']
-    description = request.form['description']
-    time = request.form['time']
-    nb_player_min = request.form['nb_player_min']
-    nb_player_max = request.form['nb_player_max']
-    image = request.files['image']
+    name = request.form["name"]
+    description = request.form["description"]
+    time = request.form["time"]
+    nb_player_min = request.form["nb_player_min"]
+    nb_player_max = request.form["nb_player_max"]
+    image = request.files["image"]
 
-    if (
-        None in [name, time, nb_player_min, nb_player_max, image] or
-        "" in [name, time, nb_player_min, nb_player_max]
-    ):
+    if None in [name, time, nb_player_min, nb_player_max, image] or "" in [
+        name,
+        time,
+        nb_player_min,
+        nb_player_max,
+    ]:
         return "Champs manquants"
 
     max_width = 175
@@ -1100,21 +1132,23 @@ def hx_create_game():
         INSERT INTO games (name, description, time, nb_player_min, nb_player_max)
         VALUES (?, ?, ?, ?, ?);
         """,
-        (name, description, time, nb_player_min, nb_player_max)
+        (name, description, time, nb_player_min, nb_player_max),
     )
     db.commit()
 
     game_id = cursor.lastrowid
     try:
-        with open(f'static/data/games/{game_id}.webp', 'wb') as f:
+        with open(f"static/data/games/{game_id}.webp", "wb") as f:
             f.write(image.getbuffer())
     except Exception as e:
         import traceback
+
         return f"Error saving image: {str(e)}\n{traceback.format_exc()}"
 
     return "Nouveau jeu créé, rechargez la page pour le voir apparaître"
 
-@app.route('/delete/game/<int:id>', methods=['POST'])
+
+@app.route("/delete/game/<int:id>", methods=["POST"])
 @login_required
 def hx_delete_game(id):
     if not current_user.admin:
@@ -1122,7 +1156,7 @@ def hx_delete_game(id):
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    image_path = f'static/data/games/{id}.webp'
+    image_path = f"static/data/games/{id}.webp"
     if os.path.exists(image_path):
         os.remove(image_path)
 
@@ -1133,16 +1167,18 @@ def hx_delete_game(id):
         DELETE FROM games
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     db.commit()
 
     return "<td class='deleted' colspan='3'>Supprimé</td>"
 
+
 #
 # Online games
 
-@app.route('/online-games/page/<int:page>', methods=['POST'])
+
+@app.route("/online-games/page/<int:page>", methods=["POST"])
 @login_required
 def hx_online_games_page(page):
     if not current_user.admin:
@@ -1158,7 +1194,7 @@ def hx_online_games_page(page):
         FROM online_games
         LIMIT 10 OFFSET ?;
         """,
-        (page * 10,)
+        (page * 10,),
     )
     online_games = cursor.fetchall()
 
@@ -1185,7 +1221,8 @@ def hx_online_games_page(page):
 
     return html
 
-@app.route('/create/online-game', methods=['POST'])
+
+@app.route("/create/online-game", methods=["POST"])
 @login_required
 def hx_create_online_game():
     if not current_user.admin:
@@ -1193,15 +1230,12 @@ def hx_create_online_game():
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    name = request.form['name']
-    link = request.form['link']
-    description = request.form['description']
-    image = request.files['image']
+    name = request.form["name"]
+    link = request.form["link"]
+    description = request.form["description"]
+    image = request.files["image"]
 
-    if (
-        None in [name, link, description, image] or
-        "" in [name, link, description]
-    ):
+    if None in [name, link, description, image] or "" in [name, link, description]:
         return "Champs manquants"
 
     max_width = 150
@@ -1216,17 +1250,18 @@ def hx_create_online_game():
         INSERT INTO online_games (name, description)
         VALUES (?, ?);
         """,
-        (name, description)
+        (name, description),
     )
     db.commit()
 
     online_game_id = cursor.lastrowid
-    with open(f'static/data/online_games/{online_game_id}.webp', 'wb') as f:
+    with open(f"static/data/online_games/{online_game_id}.webp", "wb") as f:
         f.write(image.getbuffer())
 
     return "Nouveau jeu créé, rechargez la page pour le voir apparaître"
 
-@app.route('/delete/online-game/<int:id>', methods=['POST'])
+
+@app.route("/delete/online-game/<int:id>", methods=["POST"])
 @login_required
 def hx_delete_online_game(id):
     if not current_user.admin:
@@ -1234,7 +1269,7 @@ def hx_delete_online_game(id):
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    image_path = f'static/data/online_games/{id}.webp'
+    image_path = f"static/data/online_games/{id}.webp"
     if os.path.exists(image_path):
         os.remove(image_path)
 
@@ -1245,16 +1280,18 @@ def hx_delete_online_game(id):
         DELETE FROM online_games
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     db.commit()
 
     return "<td class='deleted' colspan='3'>Supprimé</td>"
 
+
 #
 # Users
 
-@app.route('/users/page/<int:page>', methods=['POST'])
+
+@app.route("/users/page/<int:page>", methods=["POST"])
 @login_required
 def hx_users_page(page):
     if not current_user.admin:
@@ -1270,7 +1307,7 @@ def hx_users_page(page):
         FROM users
         LIMIT 10 OFFSET ?;
         """,
-        (page * 10,)
+        (page * 10,),
     )
     users = cursor.fetchall()
 
@@ -1281,7 +1318,7 @@ def hx_users_page(page):
                 <td>{user[0]}</td>
                 <td>{user[1]}</td>
                 <td>{user[2]}</td>
-                <td>{'Oui' if user[3] == 1 else 'Non'}</td>
+                <td>{"Oui" if user[3] == 1 else "Non"}</td>
                 <td>
                     <button onclick="editUser({user[0]}, {user[3]})">Éditer</button>
                     <form
@@ -1300,7 +1337,8 @@ def hx_users_page(page):
 
     return html
 
-@app.route('/edit/user/<int:id>', methods=['POST'])
+
+@app.route("/edit/user/<int:id>", methods=["POST"])
 @login_required
 def hx_edit_user(id):
     if not current_user.admin:
@@ -1308,7 +1346,7 @@ def hx_edit_user(id):
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
 
-    admin = request.form['admin']
+    admin = request.form["admin"]
 
     db = get_db()
     cursor = db.cursor()
@@ -1318,13 +1356,14 @@ def hx_edit_user(id):
         SET admin = ?
         WHERE id = ?;
         """,
-        (admin, id)
+        (admin, id),
     )
     db.commit()
 
     return ""
 
-@app.route('/delete/user/<int:id>', methods=['POST'])
+
+@app.route("/delete/user/<int:id>", methods=["POST"])
 @login_required
 def hx_delete_user(id):
     if not current_user.admin:
@@ -1337,11 +1376,12 @@ def hx_delete_user(id):
         DELETE FROM users
         WHERE id = ?;
         """,
-        (id,)
+        (id,),
     )
     db.commit()
 
     return "<td class='deleted' colspan='5'>Supprimé</td>"
+
 
 #
 #

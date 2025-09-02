@@ -5,13 +5,6 @@
 
     {% include 'header.html' %}
 
-                <script>
-                  var description = {};
-                  {% for game in games %}
-                  description["{{ game[0] }}"] = "{{ game[2] }}";
-                  {% endfor %}
-                </script>
-
                 <h2>Catalogue</h2>
 
                 <form
@@ -79,5 +72,12 @@
                 </ul>
 
                 <div id="pop-up-desc" class="pop-up" onclick="closePopUpDesc()"></div>
+
+                <script>
+                    let window.description = {};
+                    {% for game in games %}
+                    description[`{{ game[0] }}`] = `{{ game[2] }}`;
+                    {% endfor %}
+                </script>
 
 {% include 'footer.html' %}
