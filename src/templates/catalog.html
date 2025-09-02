@@ -74,7 +74,7 @@
                 <div id="pop-up-desc" class="pop-up" onclick="closePopUpDesc()"></div>
 
                 <script>
-                    let window.description = {};
+                    window.description = {};
                     {% for game in games %}
                     description[`{{ game[0] }}`] = `{{ game[2] }}`;
                     {% endfor %}
