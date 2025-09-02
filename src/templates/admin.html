@@ -8,6 +8,15 @@
                 <section id="reservations">
                     <h2>Réservations</h2>
 
+                    <form
+                        action="/reservations/page/0"
+                        method="POST"
+                        hx-post="/reservations/page/0"
+                        hx-trigger="change, keyup from:.search-reservations"
+                        hx-target="#reservations-table"
+                    >
+                        <input type="text" class="search-reservations" name="name" placeholder="Rechercher par nom d'utilisateur ou de jeu" />
+                    </form>
                     <table>
                         <thead>
                             <tr>
@@ -90,6 +99,15 @@
                         <div class="response"></div>
                     </form>
 
+                    <form
+                        action="/events/page/0"
+                        method="POST"
+                        hx-post="/events/page/0"
+                        hx-trigger="change, keyup from:.search-events"
+                        hx-target="#events-table"
+                    >
+                        <input type="text" class="search-events" name="name" placeholder="Rechercher par nom d'évènement" />
+                    </form>
                     <table>
                         <thead>
                             <tr>
@@ -185,6 +203,15 @@
                         <div class="response"></div>
                     </form>
 
+                    <form
+                        action="/games/page/0"
+                        method="POST"
+                        hx-post="/games/page/0"
+                        hx-trigger="change, keyup from:.search-games"
+                        hx-target="#games-table"
+                    >
+                        <input type="text" class="search-games" name="name" placeholder="Rechercher par nom de jeu" />
+                    </form>
                     <table>
                         <thead>
                             <tr>
@@ -258,6 +285,15 @@
                         <div class="response"></div>
                     </form>
 
+                    <form
+                        action="/online-games/page/0"
+                        method="POST"
+                        hx-post="/online-games/page/0"
+                        hx-trigger="change, keyup from:.search-online-games"
+                        hx-target="#online-games-table"
+                    >
+                        <input type="text" class="search-online-games" name="name" placeholder="Rechercher par nom de jeu en ligne" />
+                    </form>
                     <table>
                         <thead>
                             <tr>
@@ -312,6 +348,15 @@
                 <section id="users">
                     <h2>Utilisateurs</h2>
 
+                    <form
+                        action="/users/page/0"
+                        method="POST"
+                        hx-post="/users/page/0"
+                        hx-trigger="change, keyup from:.search-users"
+                        hx-target="#users-table"
+                    >
+                        <input type="text" class="search-users" name="name" placeholder="Rechercher par nom d'utilisateur" />
+                    </form>
                     <table>
                         <thead>
                             <tr>

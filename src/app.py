@@ -363,7 +363,7 @@ def hx_catalog():
         """
 
     if html == "":
-        html = f"""
+        html = """
         <li class="game">
             Aucun jeu ne correspond à vos critères
         </li>
@@ -378,7 +378,7 @@ def hx_reserve():
         return redirect("/?error=Vous devez être connecté pour réserver")
 
     game = request.form["game"]
-    if game == None or game == "":
+    if game is None or game == "":
         return "Champs manquants"
 
     db = get_db()
@@ -729,8 +729,12 @@ def hx_reservations_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(
-        """
+    
+    name_filter = ""
+    if "name" in request.form:
+        name_filter = request.form["name"]
+    
+    query = """
         SELECT
             reservations.id,
             users.name AS user_name,
@@ -740,10 +744,20 @@ def hx_reservations_page(page):
         FROM reservations
         JOIN games ON reservations.game_id = games.id
         JOIN users ON reservations.user_id = users.id
-        LIMIT 10 OFFSET ?;
-        """,
-        (page * 10,),
-    )
+    """
+    
+    params = []
+    if name_filter:
+        query += """
+        WHERE users.name LIKE CONCAT('%', ?, '%')
+        OR games.name LIKE CONCAT('%', ?, '%')
+        """
+        params.extend([name_filter, name_filter])
+    
+    query += " LIMIT 10 OFFSET ?;"
+    params.append(page * 10)
+    
+    cursor.execute(query, tuple(params))
     reservations = cursor.fetchall()
 
     cursor.execute(
@@ -852,15 +866,25 @@ def hx_events_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(
-        """
+    
+    name_filter = ""
+    if "name" in request.form:
+        name_filter = request.form["name"]
+    
+    query = """
         SELECT id, name, date, description
         FROM events
-        ORDER BY date DESC
-        LIMIT 10 OFFSET ?;
-        """,
-        (page * 10,),
-    )
+    """
+    
+    params = []
+    if name_filter:
+        query += " WHERE name LIKE CONCAT('%', ?, '%')"
+        params.append(name_filter)
+
+    query += " ORDER BY date DESC LIMIT 10 OFFSET ?;"
+    params.append(page * 10)
+    
+    cursor.execute(query, tuple(params))
     events = cursor.fetchall()
 
     cursor.execute(
@@ -1063,14 +1087,25 @@ def hx_games_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(
-        """
+    
+    name_filter = ""
+    if "name" in request.form:
+        name_filter = request.form["name"]
+    
+    query = """
         SELECT id, name
         FROM games
-        LIMIT 10 OFFSET ?;
-        """,
-        (page * 10,),
-    )
+    """
+    
+    params = []
+    if name_filter:
+        query += " WHERE name LIKE CONCAT('%', ?, '%')"
+        params.append(name_filter)
+    
+    query += " LIMIT 10 OFFSET ?;"
+    params.append(page * 10)
+    
+    cursor.execute(query, tuple(params))
     games = cursor.fetchall()
 
     html = ""
@@ -1188,14 +1223,25 @@ def hx_online_games_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(
-        """
+    
+    name_filter = ""
+    if "name" in request.form:
+        name_filter = request.form["name"]
+    
+    query = """
         SELECT id, name, link, description
         FROM online_games
-        LIMIT 10 OFFSET ?;
-        """,
-        (page * 10,),
-    )
+    """
+    
+    params = []
+    if name_filter:
+        query += " WHERE name LIKE CONCAT('%', ?, '%')"
+        params.append(name_filter)
+    
+    query += " LIMIT 10 OFFSET ?;"
+    params.append(page * 10)
+    
+    cursor.execute(query, tuple(params))
     online_games = cursor.fetchall()
 
     html = ""
@@ -1301,14 +1347,25 @@ def hx_users_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(
-        """
+    
+    name_filter = ""
+    if "name" in request.form:
+        name_filter = request.form["name"]
+    
+    query = """
         SELECT id, name, email, admin
         FROM users
-        LIMIT 10 OFFSET ?;
-        """,
-        (page * 10,),
-    )
+    """
+    
+    params = []
+    if name_filter:
+        query += " WHERE name LIKE CONCAT('%', ?, '%')"
+        params.append(name_filter)
+    
+    query += " LIMIT 10 OFFSET ?;"
+    params.append(page * 10)
+    
+    cursor.execute(query, tuple(params))
     users = cursor.fetchall()
 
     html = ""
