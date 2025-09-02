@@ -1,0 +1,40 @@
+{% include 'head.html' %}
+
+        <link rel="stylesheet" href="/static/styles/admin.css" />
+
+    {% include 'header.html' %}
+
+                <section id="edit-game">
+                    <h2>Jeu - {{ game[1] }}</h2>
+
+                    <a href="/catalog#game-{{ game[0] }}">Voir le jeu</a><br/><br/>
+                    
+                    <div class="current-image">
+                        <p>Image actuelle:</p>
+                        <img src="/static/data/games/{{ game[0] }}.webp" alt="{{ game[1] }}" />
+                    </div>
+
+                    <form
+                        action="/edit/game/{{ game[0] }}"
+                        method="post"
+                        enctype="multipart/form-data"
+                        
+                        hx-post="/edit/game/{{ game[0] }}"
+                        hx-trigger="submit"
+                        hx-target=".response"
+                    >
+                        <input type="text" name="name" value="{{ game[1] }}" placeholder="Nom du jeu" required />
+                        <textarea name="description" placeholder="Description">{{ game[2] }}</textarea>
+                        <input type="number" name="time" value="{{ game[3] }}" placeholder="Temps de jeu (minutes)" required />
+                        <input type="number" name="nb_player_min" value="{{ game[4] }}" placeholder="Nombre minimum de joueurs" required />
+                        <input type="number" name="nb_player_max" value="{{ game[5] }}" placeholder="Nombre maximum de joueurs" required />
+                        <input type="file" name="image" accept="image/*" />
+                        <p>Laissez vide pour conserver l'image actuelle</p>
+                        <button>Modifier</button>
+
+                        <div class="response"></div>
+                    </form>
+                </section>
+
+
+{% include 'footer.html' %}

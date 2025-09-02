@@ -333,7 +333,7 @@ def hx_catalog():
     html = ""
     for game in games:
         html += f"""
-        <li class="game">
+        <li class="game" id="game-{ game[0] }">
             <div class="image" onclick="popUpDesc('{ game[0] }')" style="background-image: url('/static/data/games/{game[0]}.webp');" ></div>
             <b>{game[1]}</b>
             <ul>
@@ -1115,6 +1115,7 @@ def hx_games_page(page):
                 <td>{game[0]}</td>
                 <td>{game[1]}</td>
                 <td>
+                    <a class="button" href="/edit/game/{game[0]}">Éditer</a>
                     <form
                         action="/delete/game/{game[0]}"
                         method="post"
@@ -1177,7 +1178,6 @@ def hx_create_game():
             f.write(image.getbuffer())
     except Exception as e:
         import traceback
-
         return f"Error saving image: {str(e)}\n{traceback.format_exc()}"
 
     return "Nouveau jeu créé, rechargez la page pour le voir apparaître"
@@ -1207,6 +1207,94 @@ def hx_delete_game(id):
     db.commit()
 
     return "<td class='deleted' colspan='3'>Supprimé</td>"
+
+
+@app.route("/edit/game/<int:id>", methods=["GET"])
+@login_required
+def r_edit_game(id):
+    if not current_user.admin:
+        return redirect("/?error=Accès refusé")
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    cursor.execute(
+        """
+        SELECT id, name, description, time, nb_player_min, nb_player_max
+        FROM games
+        WHERE id = ?;
+        """,
+        (id,),
+    )
+    game = cursor.fetchone()
+    if game is None:
+        return redirect("/admin?error=Le jeu n'existe pas")
+    
+    return render_template(
+        "edit_game.html",
+        logged=current_user.is_authenticated,
+        game=game,
+    )
+
+
+@app.route("/edit/game/<int:id>", methods=["POST"])
+@login_required
+def hx_edit_game(id):
+    if not current_user.admin:
+        response = make_response()
+        response.headers["HX-Redirect"] = "/?error=Accès refusé"
+        return response
+    
+    name = request.form["name"]
+    description = request.form["description"]
+    time = request.form["time"]
+    nb_player_min = request.form["nb_player_min"]
+    nb_player_max = request.form["nb_player_max"]
+    image = request.files["image"]
+    
+    if None in [name, time, nb_player_min, nb_player_max] or "" in [
+        name,
+        time,
+        nb_player_min,
+        nb_player_max,
+    ]:
+        return "Champs manquants"
+    
+    db = get_db()
+    cursor = db.cursor()
+    
+    # Update game information
+    cursor.execute(
+        """
+        UPDATE games
+        SET
+            name = ?,
+            description = ?,
+            time = ?,
+            nb_player_min = ?,
+            nb_player_max = ?
+        WHERE id = ?;
+        """,
+        (name, description, time, nb_player_min, nb_player_max, id),
+    )
+    
+    # Handle image upload if provided
+    if image and image.filename != "":
+        max_width = 175
+        max_height = 200
+        quality = 80
+        image = resize_and_convert_to_webp(image, max_width, max_height, quality)
+        
+        try:
+            with open(f"static/data/games/{id}.webp", "wb") as f:
+                f.write(image.getbuffer())
+        except Exception as e:
+            import traceback
+            return f"Error saving image: {str(e)}\n{traceback.format_exc()}"
+    
+    db.commit()
+    
+    return "Modification effectuée"
 
 
 #

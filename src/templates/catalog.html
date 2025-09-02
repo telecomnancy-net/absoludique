@@ -37,7 +37,7 @@
 
                 <ul class="list-game">
                     {% for game in games %}
-                    <li class="game">
+                    <li class="game" id="game-{{ game[0] }}">
                         <div class="image" onclick="popUpDesc('{{ game[0] }}')" style="background-image: url('/static/data/games/{{ game[0] }}.webp');" title="Description" ></div>
                         <b>{{ game[1]|truncate(20, True, '...') }}</b>
                         <ul>

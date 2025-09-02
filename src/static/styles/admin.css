@@ -115,3 +115,16 @@ section {
         grid-template-columns: auto auto;
     }
 }
+
+#edit-game {
+    .current-image {
+        margin-bottom: 20px;
+        
+        img {
+            max-width: 175px;
+            max-height: 200px;
+            border: 1px solid var(--c-min-text);
+            border-radius: 5px;
+        }
+    }
+}
