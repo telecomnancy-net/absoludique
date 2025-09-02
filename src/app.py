@@ -334,7 +334,7 @@ def hx_catalog():
     for game in games:
         html += f"""
         <li class="game">
-            <div class="image" style="background-image: url('/static/data/games/{game[0]}.webp');" ></div>
+            <div class="image" onclick="popUpDesc('{ game[0] }')" style="background-image: url('/static/data/games/{game[0]}.webp');" ></div>
             <b>{game[1]}</b>
             <ul>
                 <li class="time">~{game[3]}min</li>

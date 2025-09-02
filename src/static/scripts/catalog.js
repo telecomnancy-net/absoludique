@@ -1,6 +1,6 @@
 let popUpElm = document.getElementById("pop-up-desc");
 
-function popUpDesc(id) {
+function popUpDesc(id, name) {
     let toDisplay = window.description[id];
     if (!toDisplay || toDisplay == "None") {
         toDisplay = "Pas des description disponible";
@@ -9,7 +9,8 @@ function popUpDesc(id) {
     popUpElm.innerHTML = `
     <div>
       <img src="/static/images/icons/close.svg" alt="Fermer" />
-      ${toDisplay}
+      <b>${toDisplay.name}</b>
+      ${toDisplay.description}
     </div>
     `;
 }

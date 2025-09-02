@@ -19,11 +19,11 @@
                     <b>Filtres</b>
                     <label>
                         <div>Joueur</div>
-                        <input type="number" name="nb_player" min="1" max="100" value="2" />
+                        <input type="number" name="nb_player" min="1" max="100" value="4" />
                     </label>
                     <label>
                         <div>Temps max</div>
-                        <input type="number" name="max_time" min="0" max="120" value="120" />
+                        <input type="number" name="max_time" min="0" value="120" />
                     </label>
                 </form>
 
@@ -39,7 +39,7 @@
                     {% for game in games %}
                     <li class="game">
                         <div class="image" onclick="popUpDesc('{{ game[0] }}')" style="background-image: url('/static/data/games/{{ game[0] }}.webp');" title="Description" ></div>
-                        <b>{{ game[1] }}</b>
+                        <b>{{ game[1]|truncate(20, True, '...') }}</b>
                         <ul>
                             <li class="time">~{{ game[3] }}min</li>
                             <li class="nb-players">
@@ -76,7 +76,10 @@
                 <script>
                     window.description = {};
                     {% for game in games %}
-                    description[`{{ game[0] }}`] = `{{ game[2] }}`;
+                        description[`{{ game[0] }}`] = {
+                            name: `{{ game[2] }}`,
+                            description: `{{ game[2] }}`
+                        };
                     {% endfor %}
                 </script>
 
