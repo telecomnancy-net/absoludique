@@ -12,56 +12,13 @@
 5. Ajouter `http://127.0.0.1:8000/google/auth/` dans les URI autorisées
 6. Copiez le `Client ID` et le `Client Secret` dans le fichier `.env` à la racine du projet
 
-### MariaDB
-
-1. Installer MariaDB
-2. Créer une base de donnée `absoludique_db`
-3. Créer un utilisateur `admin_abso` avec un mot de passe
-4. Donner les droits à l'utilisateur sur la base de donnée
-5. Remplir les informations dans le fichier `.env`
-
-```sql
-CREATE DATABASE absoludique_db;
-CREATE USER 'admin_abso'@'localhost IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON absoludique_db.* TO 'admin_abso'@'localhost;
-FLUSH PRIVILEGES;
-```
-
 
 ## Lancer le projet
 
-### Avec une venv Python
-
-Créer un environnement virtuel et l'activer
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+cd dev_env
+docker-compose up -d
 ```
-
-Installer les dépendances
-```bash
-pip install -r requirements.txt
-```
-
-Initialiser la base de donnée
-```bash
-python3 src/init_db.py
-```
-
-Lancer le projet
-```bash
-flask --app src/app.py run --port 8000
-```
-fixer le port en fonction du paramétrage du Oauth Google
-
-### Avec Docker
-
-```bash
-docker-compose up --build
-```
-
-> [!WARNING]
-> `MARIADB_HOST=` doit être fixé à `host.docker.internal` et non `127.0.0.1` si vous utilisez le MariaDB de votre machine.
 
 
 ## Technologie utilisée

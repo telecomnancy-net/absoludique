@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: absoludique
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    networks:
+      - app-network
+
+  app:
+    env_file: "./.env"
+    build:
+      dockerfile: ./Dockerfile
+      context: ..
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../src:/src
+      - static_data:/src/static/data
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+  static_data:
+
+networks:
+  app-network:
+    driver: bridge
