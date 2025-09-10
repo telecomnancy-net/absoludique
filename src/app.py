@@ -27,7 +27,7 @@ from flask_login import (
     logout_user,
 )
 from PIL import Image
-import rembg
+# import rembg # as of now don't work with Docker, need more testing
 
 load_dotenv()
 
@@ -172,8 +172,8 @@ def find_user_name(name: str):
 
 
 def resize_and_convert_to_webp(file, max_width, max_height, quality=80):
-    img_data = Image.open(file)
-    img = rembg.remove(img_data)
+    img = Image.open(file)
+    # img = rembg.remove(img)
     
     original_width, original_height = img.size
     width_ratio = max_width / original_width
