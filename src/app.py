@@ -27,7 +27,7 @@ from flask_login import (
     logout_user,
 )
 from PIL import Image
-# import rembg # as of now don't work with Docker, need more testing
+import rembg
 
 load_dotenv()
 
@@ -39,6 +39,7 @@ login_manager.init_app(app)
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+DEV = os.getenv("DEV")
 
 oauth = OAuth(app)
 
@@ -173,8 +174,8 @@ def find_user_name(name: str):
 
 def resize_and_convert_to_webp(file, max_width, max_height, quality=80):
     img = Image.open(file)
-    # img = rembg.remove(img)
-    
+    img = rembg.remove(img)
+
     original_width, original_height = img.size
     width_ratio = max_width / original_width
     height_ratio = max_height / original_height
@@ -563,7 +564,11 @@ def r_user():
 @app.route("/google/")
 def google():
     # Redirect to google_auth function
-    redirect_uri = url_for("google_auth", _external=True, _scheme="https")
+    # If dev, can't load https because no SSL connection in local
+    if DEV:
+        redirect_uri = url_for("google_auth", _external=True, _scheme="http")
+    else:
+        redirect_uri = url_for("google_auth", _external=True, _scheme="https")
     return oauth.google.authorize_redirect(redirect_uri)
 
 
@@ -731,11 +736,11 @@ def hx_reservations_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    
+
     name_filter = ""
     if "name" in request.form:
         name_filter = request.form["name"]
-    
+
     query = """
         SELECT
             reservations.id,
@@ -747,7 +752,7 @@ def hx_reservations_page(page):
         JOIN games ON reservations.game_id = games.id
         JOIN users ON reservations.user_id = users.id
     """
-    
+
     params = []
     if name_filter:
         query += """
@@ -755,10 +760,10 @@ def hx_reservations_page(page):
         OR games.name LIKE CONCAT('%', ?, '%')
         """
         params.extend([name_filter, name_filter])
-    
+
     query += " LIMIT 10 OFFSET ?;"
     params.append(page * 10)
-    
+
     cursor.execute(query, tuple(params))
     reservations = cursor.fetchall()
 
@@ -868,16 +873,16 @@ def hx_events_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    
+
     name_filter = ""
     if "name" in request.form:
         name_filter = request.form["name"]
-    
+
     query = """
         SELECT id, name, date, description
         FROM events
     """
-    
+
     params = []
     if name_filter:
         query += " WHERE name LIKE CONCAT('%', ?, '%')"
@@ -885,7 +890,7 @@ def hx_events_page(page):
 
     query += " ORDER BY date DESC LIMIT 10 OFFSET ?;"
     params.append(page * 10)
-    
+
     cursor.execute(query, tuple(params))
     events = cursor.fetchall()
 
@@ -1089,24 +1094,24 @@ def hx_games_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    
+
     name_filter = ""
     if "name" in request.form:
         name_filter = request.form["name"]
-    
+
     query = """
         SELECT id, name
         FROM games
     """
-    
+
     params = []
     if name_filter:
         query += " WHERE name LIKE CONCAT('%', ?, '%')"
         params.append(name_filter)
-    
+
     query += " LIMIT 10 OFFSET ?;"
     params.append(page * 10)
-    
+
     cursor.execute(query, tuple(params))
     games = cursor.fetchall()
 
@@ -1216,10 +1221,10 @@ def hx_delete_game(id):
 def r_edit_game(id):
     if not current_user.admin:
         return redirect("/?error=Accès refusé")
-    
+
     db = get_db()
     cursor = db.cursor()
-    
+
     cursor.execute(
         """
         SELECT id, name, description, time, nb_player_min, nb_player_max
@@ -1231,7 +1236,7 @@ def r_edit_game(id):
     game = cursor.fetchone()
     if game is None:
         return redirect("/admin?error=Le jeu n'existe pas")
-    
+
     return render_template(
         "edit_game.html",
         logged=current_user.is_authenticated,
@@ -1246,14 +1251,14 @@ def hx_edit_game(id):
         response = make_response()
         response.headers["HX-Redirect"] = "/?error=Accès refusé"
         return response
-    
+
     name = request.form["name"]
     description = request.form["description"]
     time = request.form["time"]
     nb_player_min = request.form["nb_player_min"]
     nb_player_max = request.form["nb_player_max"]
     image = request.files["image"]
-    
+
     if None in [name, time, nb_player_min, nb_player_max] or "" in [
         name,
         time,
@@ -1261,10 +1266,10 @@ def hx_edit_game(id):
         nb_player_max,
     ]:
         return "Champs manquants"
-    
+
     db = get_db()
     cursor = db.cursor()
-    
+
     # Update game information
     cursor.execute(
         """
@@ -1279,23 +1284,23 @@ def hx_edit_game(id):
         """,
         (name, description, time, nb_player_min, nb_player_max, id),
     )
-    
+
     # Handle image upload if provided
     if image and image.filename != "":
         max_width = 175
         max_height = 200
         quality = 80
         image = resize_and_convert_to_webp(image, max_width, max_height, quality)
-        
+
         try:
             with open(f"static/data/games/{id}.webp", "wb") as f:
                 f.write(image.getbuffer())
         except Exception as e:
             import traceback
             return f"Error saving image: {str(e)}\n{traceback.format_exc()}"
-    
+
     db.commit()
-    
+
     return "Modification effectuée"
 
 
@@ -1313,24 +1318,24 @@ def hx_online_games_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    
+
     name_filter = ""
     if "name" in request.form:
         name_filter = request.form["name"]
-    
+
     query = """
         SELECT id, name, link, description
         FROM online_games
     """
-    
+
     params = []
     if name_filter:
         query += " WHERE name LIKE CONCAT('%', ?, '%')"
         params.append(name_filter)
-    
+
     query += " LIMIT 10 OFFSET ?;"
     params.append(page * 10)
-    
+
     cursor.execute(query, tuple(params))
     online_games = cursor.fetchall()
 
@@ -1437,24 +1442,24 @@ def hx_users_page(page):
 
     db = get_db()
     cursor = db.cursor()
-    
+
     name_filter = ""
     if "name" in request.form:
         name_filter = request.form["name"]
-    
+
     query = """
         SELECT id, name, email, admin
         FROM users
     """
-    
+
     params = []
     if name_filter:
         query += " WHERE name LIKE CONCAT('%', ?, '%')"
         params.append(name_filter)
-    
+
     query += " LIMIT 10 OFFSET ?;"
     params.append(page * 10)
-    
+
     cursor.execute(query, tuple(params))
     users = cursor.fetchall()
 
