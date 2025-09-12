@@ -2,8 +2,8 @@ FROM python:3.13
 
 WORKDIR /src/
 
-ADD ./src /src/
-ADD requirements.txt /src
+COPY src /src/
+COPY requirements.txt /src/
 
 RUN pip install -r requirements.txt
 
