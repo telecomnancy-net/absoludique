@@ -597,13 +597,22 @@ def google_auth():
         name = token["userinfo"]["name"]
         email = token["userinfo"]["email"]
 
-        cursor.execute(
-            """
-            INSERT INTO users (google_id, name, email, admin)
-            VALUES (?, ?, ?, ?);
-            """,
-            (google_id, name, email, False),
-        )
+        if DEV:
+            cursor.execute(
+                """
+                INSERT INTO users (google_id, name, email, admin)
+                VALUES (?, ?, ?, ?);
+                """,
+                (google_id, name, email, True),
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO users (google_id, name, email, admin)
+                VALUES (?, ?, ?, ?);
+                """,
+                (google_id, name, email, False),
+            )
         db.commit()
 
         user = find_user_google_id(google_id)
