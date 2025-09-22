@@ -306,18 +306,23 @@ def hx_catalog():
     nb_player = request.form["nb_player"]
     max_time = request.form["max_time"]
 
-    cursor.execute(
-        """
-        SELECT g.id, g.name, g.description, g.time, g.nb_player_min, g.nb_player_max, r.id
-        FROM games AS g
-        LEFT JOIN reservations AS r ON g.id = r.game_id
-        WHERE
-            ? BETWEEN g.nb_player_min AND g.nb_player_max
-            AND g.time <= ?
-            AND g.name LIKE CONCAT('%', ?, '%')
-        """,
-        (nb_player, max_time, name),
-    )
+    req_db =   """
+                    SELECT g.id, g.name, g.description, g.time, g.nb_player_min, g.nb_player_max, r.id
+                    FROM games AS g
+                    LEFT JOIN reservations AS r ON g.id = r.game_id
+                    WHERE
+                        g.time <= ?
+                        AND g.name LIKE CONCAT('%', ?, '%')
+                """
+
+    if nb_player == "":
+        cursor.execute( req_db, (max_time, name),)
+    else:
+        cursor.execute(
+            req_db + """AND ? BETWEEN g.nb_player_min AND g.nb_player_max""",
+            (max_time, name, nb_player),
+        )
+
     games = cursor.fetchall()
 
     logged = current_user.is_authenticated
@@ -1552,3 +1557,4 @@ def hx_delete_user(id):
 
 # if __name__ == '__main__':
 #    app.run(debug=True)
+
