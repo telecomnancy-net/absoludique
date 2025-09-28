@@ -306,22 +306,24 @@ def hx_catalog():
     nb_player = request.form["nb_player"]
     max_time = request.form["max_time"]
 
-    req_db =   """
-                    SELECT g.id, g.name, g.description, g.time, g.nb_player_min, g.nb_player_max, r.id
+    req_db =   """SELECT g.id, g.name, g.description, g.time, g.nb_player_min, g.nb_player_max, r.id
                     FROM games AS g
                     LEFT JOIN reservations AS r ON g.id = r.game_id
                     WHERE
-                        g.time <= ?
-                        AND g.name LIKE CONCAT('%', ?, '%')
-                """
+                        g.name LIKE CONCAT('%', ?, '%')"""
+    req_params = (name,)
 
-    if nb_player == "":
-        cursor.execute( req_db, (max_time, name),)
-    else:
-        cursor.execute(
-            req_db + """AND ? BETWEEN g.nb_player_min AND g.nb_player_max""",
-            (max_time, name, nb_player),
-        )
+    if nb_player != "":
+        req_db +=   """
+                        AND ? BETWEEN g.nb_player_min AND g.nb_player_max"""
+        req_params += (nb_player,)
+    
+    if max_time != "":
+        req_db +=   """
+                        AND g.time <= ?"""
+        req_params += (max_time,)
+
+    cursor.execute( req_db, req_params,)
 
     games = cursor.fetchall()
 
