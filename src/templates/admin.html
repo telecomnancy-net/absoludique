@@ -86,6 +86,7 @@
                         hx-post="/create/event"
                         hx-trigger="submit"
                         hx-target="#events .response"
+                        hx-on::before-request="beforeRequest('events')"
                     >
                         <input type="text" name="name" placeholder="Nom" required />
                         <input type="datetime-local" name="date" required />
@@ -187,6 +188,7 @@
                         hx-post="/create/game"
                         hx-trigger="submit"
                         hx-target="#games .response"
+                        hx-on::before-request="beforeRequest('games')"
                     >
                         <input type="text" name="name" placeholder="Nom" required />
                         <div>
@@ -275,6 +277,7 @@
                         hx-post="/create/online-game"
                         hx-trigger="submit"
                         hx-target="#online-games .response"
+                        hx-on::before-request="beforeRequest('online-games')"
                     >
                         <input type="text" name="name" placeholder="Nom" required />
                         <input type="text" name="link" placeholder="Lien" required />

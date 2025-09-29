@@ -8,9 +8,9 @@
                     <h2>Jeu - {{ game[1] }}</h2>
 
                     <a href="/catalog#game-{{ game[0] }}">Voir le jeu</a><br/><br/>
-                    
+
                     <div class="current-image">
-                        <p>Image actuelle:</p>
+                        <p>Image actuelle :</p>
                         <img src="/static/data/games/{{ game[0] }}.webp" alt="{{ game[1] }}" />
                     </div>
 
@@ -18,10 +18,11 @@
                         action="/edit/game/{{ game[0] }}"
                         method="post"
                         enctype="multipart/form-data"
-                        
+
                         hx-post="/edit/game/{{ game[0] }}"
                         hx-trigger="submit"
                         hx-target=".response"
+                        hx-on::before-request="document.getElementsByClassName('response')[0].innerHTML='En cours de téléversement...'"
                     >
                         <input type="text" name="name" value="{{ game[1] }}" placeholder="Nom du jeu" required />
                         <textarea name="description" placeholder="Description">{{ game[2] }}</textarea>
