@@ -8,11 +8,13 @@
                 <h2>Catalogue</h2>
 
                 <form
+                    class="search-form"
+
                     action="/catalog"
                     method="POST"
 
                     hx-post="/catalog"
-                    hx-trigger="change, keyup from:.search"
+                    hx-trigger="change, keyup from:.search-form"
                     hx-target=".list-game"
                 >
                     <input type="search" class="search" name="name" placeholder="Rechercher" />
