@@ -2,6 +2,7 @@
 
         <link rel="stylesheet" href="/static/styles/catalog.css" />
         <script src="/static/scripts/catalog.js" defer></script>
+        <script src="/static/scripts/idiomorph-ext.min.js"></script>
 
     {% include 'header.html' %}
 
@@ -16,6 +17,9 @@
                     hx-post="/catalog"
                     hx-trigger="change, keyup from:.search-form"
                     hx-target=".list-game"
+
+                    hx-ext="morph"
+                    hx-swap="morph:innerHTML"
                 >
                     <input type="search" class="search" name="name" placeholder="Rechercher" />
                     <b>Filtres</b>
