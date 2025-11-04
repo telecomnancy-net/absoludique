@@ -168,4 +168,4 @@ requirements.txt
 
 ## Base de donnée
 
-Voir fichier `init_db.py` pour la structure de la base de donnée.
+Voir fichier `init_db.sql` pour la structure de la base de donnée.
